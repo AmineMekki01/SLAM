@@ -7,12 +7,12 @@ class Display(object):
         self.width = width
         self.height = height
         self.screen = pygame.display.set_mode((width, height))
-    
-    def process_frame(self, img):
-        img = cv2.resize(img,(self.width ,self.height))
+
+    def plot_vid(self, img):
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         surf = pygame.surfarray.make_surface(img_rgb.swapaxes(0,1) ).convert()
         self.screen.blit(surf , (0,0))
         pygame.display.flip()
+        
 
         
