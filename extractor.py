@@ -1,10 +1,11 @@
 import cv2 
 import numpy as np
-
+from skimage.measure import ransac
+from skimage.transform import FundamentalMatrixTransform
 class FeatureExtractor(object):
 
     def __init__(self):
-        self.orb = cv2.ORB_create(nfeatures=100)
+        self.orb = cv2.ORB_create()
         self.bf = cv2.BFMatcher(cv2.NORM_HAMMING)
         self.last = None
         
@@ -21,10 +22,23 @@ class FeatureExtractor(object):
         if self.last is not None:        
             matches = self.bf.knnMatch(des, self.last['des'], k=2)
             for m,n in matches:
-                if m.distance < 0.75*n.distance:
-                    ret.append((kps[m.queryIdx], self.last['kps'][m.trainIdx]))
+                if m.distance < 0.5*n.distance:
+                    kp1 = kps[m.queryIdx].pt
+                    kp2 = self.last['kps'][m.trainIdx].pt
+                    ret.append((kp1, kp2))
         
-        # return
+        if len(ret) > 0:  # Ensure we have at least 8 points.
+            ret = np.array(ret)
+            print("ret shape : " , ret.shape)
+            #filter 
+            model, inliers = ransac((ret[:, 0] , ret[:,1]), 
+                                    FundamentalMatrixTransform, 
+                                    min_samples = 8, 
+                                    residual_threshold = 1, 
+                                    max_trials = 100)
+        
+            ret = ret[inliers]
+        # returnS
         self.last = {'kps' : kps, 'des' : des} 
         
         return ret
